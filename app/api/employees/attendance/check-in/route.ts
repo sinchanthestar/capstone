@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { notifyAdminsAttendance } from '@/lib/notifications';
+
+// Toleransi keterlambatan dalam menit (bisa diubah sesuai kebijakan)
+const LATE_TOLERANCE_MINUTES = 15;
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,11 +27,14 @@ export async function POST(req: NextRequest) {
     const employeeId = empRes.rows[0].id;
 
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const now = new Date();
 
-    // VALIDASI: Cek apakah ada jadwal untuk hari ini
+    // VALIDASI: Cek apakah ada jadwal untuk hari ini dan ambil info shift
     const scheduleCheck = await query(
-      `SELECT id FROM schedule_assignments
-       WHERE employee_id=$1 AND scheduled_date=$2
+      `SELECT sa.id, s.start_time, s.name as shift_name
+       FROM schedule_assignments sa
+       JOIN shifts s ON sa.shift_id = s.id
+       WHERE sa.employee_id = $1 AND sa.scheduled_date = $2
        LIMIT 1`,
       [employeeId, today]
     );
@@ -40,6 +47,8 @@ export async function POST(req: NextRequest) {
     }
 
     const assignmentId = scheduleCheck.rows[0].id;
+    const shiftStartTime = scheduleCheck.rows[0].start_time; // Format: HH:MM:SS
+    const shiftName = scheduleCheck.rows[0].shift_name;
 
     // Cek sudah check-in hari ini belum
     const exist = await query(
@@ -54,14 +63,59 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Already checked in today' }, { status: 400 });
     }
 
+    // Hitung apakah terlambat
+    // Parse shift start time (format HH:MM:SS)
+    const [shiftHour, shiftMinute] = shiftStartTime.split(':').map(Number);
+    const shiftStartDate = new Date(now);
+    shiftStartDate.setHours(shiftHour, shiftMinute, 0, 0);
+
+    // Tambahkan toleransi
+    const lateThreshold = new Date(shiftStartDate);
+    lateThreshold.setMinutes(lateThreshold.getMinutes() + LATE_TOLERANCE_MINUTES);
+
+    // Tentukan status berdasarkan waktu check-in
+    let status = 'PENDING'; // Default: tepat waktu, masih pending approval
+    let lateMinutes = 0;
+
+    if (now > lateThreshold) {
+      status = 'LATE';
+      lateMinutes = Math.floor((now.getTime() - shiftStartDate.getTime()) / 60000);
+    }
+
     const insert = await query(
-      `INSERT INTO attendance_logs (employee_id, schedule_assignment_id, attendance_date, check_in_at, status)
-       VALUES ($1, $2, $3, CURRENT_TIMESTAMP, 'PENDING')
+      `INSERT INTO attendance_logs (employee_id, schedule_assignment_id, attendance_date, check_in_at, status, late_minutes)
+       VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4, $5)
        RETURNING id`,
-      [employeeId, assignmentId, today]
+      [employeeId, assignmentId, today, status, lateMinutes]
     );
 
-    return NextResponse.json({ id: insert.rows[0].id, status: 'PENDING' }, { status: 201 });
+    // Kirim notifikasi ke semua admin
+    const checkInTimeStr = now.toTimeString().slice(0, 5);
+    notifyAdminsAttendance(
+      session.user.fullName,
+      shiftName,
+      checkInTimeStr,
+      status === 'LATE',
+      lateMinutes > 0 ? lateMinutes : undefined
+    ).catch(err => console.error('Failed to notify admins:', err));
+
+    // Response dengan info keterlambatan
+    const response: any = {
+      id: insert.rows[0].id,
+      status,
+      shift: shiftName,
+      shiftStartTime: shiftStartTime.slice(0, 5), // HH:MM
+      checkInTime: checkInTimeStr
+    };
+
+    if (status === 'LATE') {
+      response.lateMinutes = lateMinutes;
+      response.message = `Anda terlambat ${lateMinutes} menit dari jadwal shift ${shiftName} (${shiftStartTime.slice(0, 5)})`;
+    } else {
+      response.message = `Check-in berhasil untuk shift ${shiftName}`;
+    }
+
+    return NextResponse.json(response, { status: 201 });
   } catch (e) {
     console.error('check-in error:', e);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

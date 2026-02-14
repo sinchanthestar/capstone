@@ -48,7 +48,7 @@ export function ShiftsManager() {
         setShifts(data.shifts);
       }
     } catch (error) {
-      toast.error('Failed to load shifts');
+      toast.error('Gagal memuat shift');
     } finally {
       setLoading(false);
     }
@@ -97,76 +97,76 @@ export function ShiftsManager() {
       });
 
       if (response.ok) {
-        toast.success(editingShift ? 'Shift updated' : 'Shift created');
+        toast.success(editingShift ? 'Shift berhasil diperbarui' : 'Shift berhasil dibuat');
         setOpenDialog(false);
         fetchShifts();
       } else {
-        toast.error('Failed to save shift');
+        toast.error('Gagal menyimpan shift');
       }
     } catch (error) {
-      toast.error('Error saving shift');
+      toast.error('Error menyimpan shift');
     }
   };
 
   const handleDelete = async (id: string, shiftName: string) => {
-    if (!confirm(`Delete shift "${shiftName}"? This cannot be undone if it has no active assignments.`)) return;
+    if (!confirm(`Hapus shift "${shiftName}"? Tindakan ini tidak dapat dibatalkan jika tidak ada jadwal aktif.`)) return;
 
     try {
       const response = await fetch(`/api/shifts/${id}`, { method: 'DELETE' });
-      
+
       if (response.ok) {
-        toast.success('Shift deleted successfully');
+        toast.success('Shift berhasil dihapus');
         fetchShifts();
       } else {
         const error = await response.json();
         if (response.status === 400) {
           // Conflict - shift has active assignments
-          toast.error(error.error || 'Cannot delete shift with active assignments');
+          toast.error(error.error || 'Tidak dapat menghapus shift dengan jadwal aktif');
         } else {
-          toast.error(error.error || 'Failed to delete shift');
+          toast.error(error.error || 'Gagal menghapus shift');
         }
       }
     } catch (error) {
-      toast.error('Error deleting shift');
+      toast.error('Error menghapus shift');
       console.error(error);
     }
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center p-8">Loading...</div>;
+    return <div className="flex items-center justify-center p-8">Memuat...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Shifts</h1>
+        <h1 className="text-3xl font-bold">Shift</h1>
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
           <DialogTrigger asChild>
             <Button onClick={() => handleOpenDialog()}>
               <Plus className="mr-2 h-4 w-4" />
-              New Shift
+              Shift Baru
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingShift ? 'Edit Shift' : 'Create New Shift'}</DialogTitle>
+              <DialogTitle>{editingShift ? 'Edit Shift' : 'Buat Shift Baru'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="name">Shift Name</Label>
+                <Label htmlFor="name">Nama Shift</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  placeholder="e.g., Morning Shift"
+                  placeholder="contoh: Shift Pagi"
                   required
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="startTime">Start Time</Label>
+                  <Label htmlFor="startTime">Jam Mulai</Label>
                   <Input
                     id="startTime"
                     type="time"
@@ -178,7 +178,7 @@ export function ShiftsManager() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="endTime">End Time</Label>
+                  <Label htmlFor="endTime">Jam Selesai</Label>
                   <Input
                     id="endTime"
                     type="time"
@@ -191,19 +191,19 @@ export function ShiftsManager() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Deskripsi</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  placeholder="Optional description"
+                  placeholder="Deskripsi opsional"
                   rows={3}
                 />
               </div>
               <div>
-                <Label htmlFor="color">Color</Label>
+                <Label htmlFor="color">Warna</Label>
                 <Input
                   id="color"
                   type="color"
@@ -214,7 +214,7 @@ export function ShiftsManager() {
                 />
               </div>
               <Button type="submit" className="w-full">
-                {editingShift ? 'Update Shift' : 'Create Shift'}
+                {editingShift ? 'Perbarui Shift' : 'Buat Shift'}
               </Button>
             </form>
           </DialogContent>
@@ -223,18 +223,18 @@ export function ShiftsManager() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Active Shifts</CardTitle>
+          <CardTitle>Shift Aktif</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Start Time</TableHead>
-                  <TableHead>End Time</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>Nama</TableHead>
+                  <TableHead>Jam Mulai</TableHead>
+                  <TableHead>Jam Selesai</TableHead>
+                  <TableHead>Deskripsi</TableHead>
+                  <TableHead>Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

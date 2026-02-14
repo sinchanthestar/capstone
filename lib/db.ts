@@ -5,7 +5,13 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000, // Increased from 2s to 10s for stability
+});
+
+// Handle unexpected errors on idle clients
+pool.on('error', (err: Error) => {
+  console.error('Unexpected error on idle database client', err);
+  // In production, you might want to send this to an error tracking service
 });
 
 /**

@@ -147,6 +147,28 @@ export async function initializeDatabase(): Promise<boolean> {
       CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
       CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
       CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
+
+      -- Leave requests table
+      CREATE TABLE IF NOT EXISTS leave_requests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+        assignment_id UUID NOT NULL REFERENCES schedule_assignments(id) ON DELETE CASCADE,
+        reason TEXT NOT NULL,
+        status VARCHAR(20) DEFAULT 'PENDING',
+        admin_notes TEXT,
+        approved_by UUID REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Add columns to schedule_assignments for replacement tracking
+      ALTER TABLE schedule_assignments ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'ACTIVE';
+      ALTER TABLE schedule_assignments ADD COLUMN IF NOT EXISTS replaced_by_employee_id UUID REFERENCES employees(id);
+      ALTER TABLE schedule_assignments ADD COLUMN IF NOT EXISTS replacement_for_id UUID REFERENCES schedule_assignments(id);
+
+      -- Create indexes for leave_requests
+      CREATE INDEX IF NOT EXISTS idx_leave_requests_employee_id ON leave_requests(employee_id);
+      CREATE INDEX IF NOT EXISTS idx_leave_requests_status ON leave_requests(status);
     `;
 
     // Split and execute each statement

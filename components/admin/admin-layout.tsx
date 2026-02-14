@@ -21,6 +21,7 @@ import {
   ChevronDown,
   Settings,
   Bell,
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import { SidebarItem } from './sidebar-item';
@@ -72,7 +73,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
             <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
           </div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Memuat...</p>
         </div>
       </div>
     );
@@ -82,9 +83,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <aside
-        className={`${
-          sidebarOpen ? 'w-64' : 'w-20'
-        } bg-gradient-to-b from-sidebar to-sidebar/95 text-sidebar-foreground transition-all duration-300 border-r border-sidebar-border hidden md:flex flex-col justify-between shadow-xl`}
+        className={`${sidebarOpen ? 'w-64' : 'w-20'
+          } bg-gradient-to-b from-sidebar to-sidebar/95 text-sidebar-foreground transition-all duration-300 border-r border-sidebar-border hidden md:flex flex-col justify-between shadow-xl`}
       >
         <div>
           <div className="p-6 border-b border-sidebar-border/50 flex items-center gap-3">
@@ -100,11 +100,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <div className={`px-6 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 ${sidebarOpen ? '' : 'hidden'}`}>
               Menu
             </div>
-            <SidebarItem icon={Home} label="Dashboard" href="/admin" open={sidebarOpen} />
-            <SidebarItem icon={Clock} label="Shifts" href="/admin/shifts" open={sidebarOpen} />
-            <SidebarItem icon={Users} label="Employees" href="/admin/employees" open={sidebarOpen} />
-            <SidebarItem icon={Calendar} label="Schedule" href="/admin/schedule" open={sidebarOpen} />
-            <SidebarItem icon={CheckCircle2} label="Attendance" href="/admin/attendance" open={sidebarOpen} />
+            <SidebarItem icon={Home} label="Beranda" href="/admin" open={sidebarOpen} />
+            <SidebarItem icon={Clock} label="Shift" href="/admin/shifts" open={sidebarOpen} />
+            <SidebarItem icon={Users} label="Karyawan" href="/admin/employees" open={sidebarOpen} />
+            <SidebarItem icon={Calendar} label="Jadwal" href="/admin/schedule" open={sidebarOpen} />
+            <SidebarItem icon={CheckCircle2} label="Kehadiran" href="/admin/attendance" open={sidebarOpen} />
+            <SidebarItem icon={FileText} label="Pengajuan Izin" href="/admin/leave-requests" open={sidebarOpen} />
           </nav>
         </div>
 
@@ -131,14 +132,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <Menu size={20} />
             </button>
             <div>
-              <h2 className="text-lg font-semibold">Admin Dashboard</h2>
-              <p className="text-xs text-muted-foreground">Welcome back, {user.fullName}</p>
+              <h2 className="text-lg font-semibold">Dashboard Admin</h2>
+              <p className="text-xs text-muted-foreground">Selamat datang, {user.fullName}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             <NotificationsPanel />
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 hover:bg-muted">
@@ -147,7 +148,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   </div>
                   <div className="hidden sm:flex flex-col items-start">
                     <span className="text-sm font-medium">{user.fullName}</span>
-                    <span className="text-xs text-muted-foreground">{user.role}</span>
+                    <span className="text-xs text-muted-foreground">{user.role === 'admin' ? 'Administrator' : user.role}</span>
                   </div>
                   <ChevronDown size={16} className="text-muted-foreground" />
                 </Button>
@@ -158,11 +159,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <div className="my-2 border-t border-border"></div>
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
-                  Settings
+                  Pengaturan
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
-                  Logout
+                  Keluar
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -177,3 +178,4 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     </div>
   );
 }
+

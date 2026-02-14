@@ -2,7 +2,7 @@ import { query } from './db';
 
 interface NotificationOptions {
   userId: string;
-  type: 'shift_assigned' | 'shift_confirmed' | 'shift_cancelled' | 'schedule_updated';
+  type: 'shift_assigned' | 'shift_confirmed' | 'shift_cancelled' | 'schedule_updated' | 'attendance_checkin' | 'attendance_late';
   title: string;
   message?: string;
 }
@@ -80,4 +80,43 @@ export async function notifyScheduleUpdate(adminId: string, message: string) {
     title: 'Schedule Updated',
     message,
   });
+}
+
+/**
+ * Notify all admins when an employee checks in
+ */
+export async function notifyAdminsAttendance(
+  employeeName: string,
+  shiftName: string,
+  checkInTime: string,
+  isLate: boolean,
+  lateMinutes?: number
+) {
+  try {
+    // Get all admin user IDs
+    const adminsResult = await query(
+      `SELECT id FROM users WHERE role = 'admin' AND is_active = true`
+    );
+
+    const type = isLate ? 'attendance_late' : 'attendance_checkin';
+    const title = isLate
+      ? `⚠️ Karyawan Terlambat: ${employeeName}`
+      : `📋 Konfirmasi Kehadiran: ${employeeName}`;
+
+    const message = isLate
+      ? `${employeeName} check-in terlambat ${lateMinutes} menit untuk ${shiftName} pada ${checkInTime}. Menunggu konfirmasi.`
+      : `${employeeName} telah check-in untuk ${shiftName} pada ${checkInTime}. Menunggu konfirmasi.`;
+
+    // Create notification for each admin
+    for (const admin of adminsResult.rows) {
+      await createNotification({
+        userId: admin.id,
+        type,
+        title,
+        message,
+      });
+    }
+  } catch (error) {
+    console.error('Error notifying admins:', error);
+  }
 }

@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 -- Employees table
 CREATE TABLE IF NOT EXISTS employees (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -22,7 +21,6 @@ CREATE TABLE IF NOT EXISTS employees (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 -- Shift types table
 CREATE TABLE IF NOT EXISTS shifts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -35,7 +33,6 @@ CREATE TABLE IF NOT EXISTS shifts (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 -- Schedule assignments
 CREATE TABLE IF NOT EXISTS schedule_assignments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -48,7 +45,6 @@ CREATE TABLE IF NOT EXISTS schedule_assignments (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(employee_id, shift_id, scheduled_date)
 );
-
 -- Shift swap requests
 CREATE TABLE IF NOT EXISTS shift_swap_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -59,7 +55,6 @@ CREATE TABLE IF NOT EXISTS shift_swap_requests (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 -- Notifications
 CREATE TABLE IF NOT EXISTS notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -72,7 +67,6 @@ CREATE TABLE IF NOT EXISTS notifications (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 -- Sessions for authentication
 CREATE TABLE IF NOT EXISTS sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -81,7 +75,26 @@ CREATE TABLE IF NOT EXISTS sessions (
   expires_at TIMESTAMP NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
+-- Leave requests table for employee time off requests
+CREATE TABLE IF NOT EXISTS leave_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+  assignment_id UUID NOT NULL REFERENCES schedule_assignments(id) ON DELETE CASCADE,
+  reason TEXT NOT NULL,
+  status VARCHAR(20) DEFAULT 'PENDING',
+  admin_notes TEXT,
+  approved_by UUID REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+-- Add columns to schedule_assignments for replacement tracking
+ALTER TABLE schedule_assignments
+ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'ACTIVE';
+ALTER TABLE schedule_assignments
+ADD COLUMN IF NOT EXISTS replaced_by_employee_id UUID REFERENCES employees(id);
+ALTER TABLE schedule_assignments
+ADD COLUMN IF NOT EXISTS replacement_for_id UUID REFERENCES schedule_assignments(id) ON DELETE
+SET NULL;
 -- Create indexes for better query performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_employees_user_id ON employees(user_id);
@@ -91,3 +104,5 @@ CREATE INDEX idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX idx_notifications_is_read ON notifications(is_read);
 CREATE INDEX idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX idx_sessions_token ON sessions(token);
+CREATE INDEX idx_leave_requests_employee_id ON leave_requests(employee_id);
+CREATE INDEX idx_leave_requests_status ON leave_requests(status);

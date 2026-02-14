@@ -35,15 +35,15 @@ export function UpcomingSchedules() {
         if (!session || !session.user) {
           throw new Error('No user session');
         }
-        
+
         // Fetch employee record to get employee_id
         const empRes = await fetch('/api/employees');
         if (!empRes.ok) throw new Error('Failed to fetch employees');
-        
+
         const empJson = await empRes.json();
         const employees = empJson.employees || [];
         const currentEmployee = employees.find((e: any) => e.user_id === session.user.id);
-        
+
         if (!currentEmployee) {
           throw new Error('Employee record not found');
         }
@@ -52,7 +52,7 @@ export function UpcomingSchedules() {
         const today = new Date();
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        
+
         const startDate = format(tomorrow, 'yyyy-MM-dd');
         const endDate = format(new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
 
@@ -217,11 +217,11 @@ export function UpcomingSchedules() {
                   <div className="flex flex-col gap-2 items-end">
                     {schedule.status === 'confirmed' ? (
                       <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">
-                        ✅ Confirmed
+                        ✅ Terkonfirmasi
                       </Badge>
                     ) : (
                       <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800">
-                        ⏳ Pending
+                        ⏳ Menunggu
                       </Badge>
                     )}
                   </div>

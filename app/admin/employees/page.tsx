@@ -62,7 +62,7 @@ export default function EmployeesPage() {
         setEmployees(data.employees);
       }
     } catch (error) {
-      toast.error('Failed to load employees');
+      toast.error('Gagal memuat data karyawan');
     } finally {
       setLoading(false);
     }
@@ -97,14 +97,14 @@ export default function EmployeesPage() {
       });
 
       if (response.ok) {
-        toast.success('Employee updated');
+        toast.success('Karyawan berhasil diperbarui');
         setOpenDialog(false);
         fetchEmployees();
       } else {
-        toast.error('Failed to update employee');
+        toast.error('Gagal memperbarui karyawan');
       }
     } catch (error) {
-      toast.error('Error updating employee');
+      toast.error('Error memperbarui karyawan');
     }
   };
 
@@ -112,7 +112,7 @@ export default function EmployeesPage() {
     e.preventDefault();
 
     if (createForm.password.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      toast.error('Password minimal 8 karakter');
       return;
     }
 
@@ -130,16 +130,16 @@ export default function EmployeesPage() {
       });
 
       if (response.ok) {
-        toast.success('Employee account created');
+        toast.success('Akun karyawan berhasil dibuat');
         setOpenCreateDialog(false);
         setCreateForm({ fullName: '', email: '', password: '' });
         fetchEmployees();
       } else {
         const err = await response.json().catch(() => ({}));
-        toast.error(err.error || 'Failed to create employee');
+        toast.error(err.error || 'Gagal membuat akun karyawan');
       }
     } catch (error) {
-      toast.error('Failed to create employee');
+      toast.error('Gagal membuat akun karyawan');
     } finally {
       setCreateLoading(false);
     }
@@ -148,7 +148,7 @@ export default function EmployeesPage() {
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center p-8">Loading...</div>
+        <div className="flex items-center justify-center p-8">Memuat...</div>
       </AdminLayout>
     );
   }
@@ -157,20 +157,20 @@ export default function EmployeesPage() {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold">Employees</h1>
+          <h1 className="text-3xl font-bold">Karyawan</h1>
 
           <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
             <DialogTrigger asChild>
-              <Button>Add Employee</Button>
+              <Button>Tambah Karyawan</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create Employee Account</DialogTitle>
+                <DialogTitle>Buat Akun Karyawan</DialogTitle>
               </DialogHeader>
 
               <form onSubmit={handleCreateEmployee} className="space-y-4">
                 <div>
-                  <Label htmlFor="newFullName">Full Name</Label>
+                  <Label htmlFor="newFullName">Nama Lengkap</Label>
                   <Input
                     id="newFullName"
                     value={createForm.fullName}
@@ -193,7 +193,7 @@ export default function EmployeesPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="newPassword">Temporary Password</Label>
+                  <Label htmlFor="newPassword">Password Sementara</Label>
                   <Input
                     id="newPassword"
                     type="password"
@@ -201,12 +201,12 @@ export default function EmployeesPage() {
                     onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
                     required
                     disabled={createLoading}
-                    placeholder="min 8 characters"
+                    placeholder="minimal 8 karakter"
                   />
                 </div>
 
                 <Button type="submit" className="w-full" disabled={createLoading}>
-                  {createLoading ? 'Creating...' : 'Create Employee'}
+                  {createLoading ? 'Membuat...' : 'Buat Karyawan'}
                 </Button>
               </form>
             </DialogContent>
@@ -215,19 +215,19 @@ export default function EmployeesPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Team Members</CardTitle>
+            <CardTitle>Daftar Karyawan</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
+                    <TableHead>Nama</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Position</TableHead>
+                    <TableHead>Departemen</TableHead>
+                    <TableHead>Jabatan</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -239,7 +239,7 @@ export default function EmployeesPage() {
                       <TableCell>{employee.position || '-'}</TableCell>
                       <TableCell>
                         <Badge variant={employee.is_available ? 'default' : 'outline'}>
-                          {employee.is_available ? 'Available' : 'Unavailable'}
+                          {employee.is_available ? 'Tersedia' : 'Tidak Tersedia'}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -258,40 +258,40 @@ export default function EmployeesPage() {
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>Edit Employee</DialogTitle>
+                              <DialogTitle>Edit Karyawan</DialogTitle>
                             </DialogHeader>
                             <form onSubmit={handleSubmit} className="space-y-4">
                               <div>
-                                <Label htmlFor="department">Department</Label>
+                                <Label htmlFor="department">Departemen</Label>
                                 <Input
                                   id="department"
                                   value={formData.department}
                                   onChange={(e) =>
                                     setFormData({ ...formData, department: e.target.value })
                                   }
-                                  placeholder="e.g., Sales"
+                                  placeholder="contoh: Penjualan"
                                 />
                               </div>
                               <div>
-                                <Label htmlFor="position">Position</Label>
+                                <Label htmlFor="position">Jabatan</Label>
                                 <Input
                                   id="position"
                                   value={formData.position}
                                   onChange={(e) =>
                                     setFormData({ ...formData, position: e.target.value })
                                   }
-                                  placeholder="e.g., Manager"
+                                  placeholder="contoh: Manajer"
                                 />
                               </div>
                               <div>
-                                <Label htmlFor="phone">Phone</Label>
+                                <Label htmlFor="phone">Telepon</Label>
                                 <Input
                                   id="phone"
                                   value={formData.phone}
                                   onChange={(e) =>
                                     setFormData({ ...formData, phone: e.target.value })
                                   }
-                                  placeholder="e.g., +1 (555) 123-4567"
+                                  placeholder="contoh: +62 812-3456-7890"
                                 />
                               </div>
                               <div className="flex items-center gap-2">
@@ -303,11 +303,11 @@ export default function EmployeesPage() {
                                   }
                                 />
                                 <Label htmlFor="available" className="mb-0">
-                                  Employee is available
+                                  Karyawan tersedia untuk jadwal
                                 </Label>
                               </div>
                               <Button type="submit" className="w-full">
-                                Save Changes
+                                Simpan Perubahan
                               </Button>
                             </form>
                           </DialogContent>

@@ -21,8 +21,11 @@ interface AttendanceLog {
   attendance_date: string;
   check_in_at: string | null;
   check_out_at: string | null;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'LATE' | 'APPROVED' | 'REJECTED';
   notes: string | null;
+  late_minutes?: number;
+  shift_name?: string;
+  shift_start_time?: string;
 }
 
 export default function AttendancePage() {
@@ -44,11 +47,11 @@ export default function AttendancePage() {
         const data = await response.json();
         setLogs(data.logs || []);
       } else {
-        toast.error('Failed to load attendance logs');
+        toast.error('Gagal memuat data kehadiran');
       }
     } catch (error) {
       console.error('Fetch error:', error);
-      toast.error('Error loading logs');
+      toast.error('Error memuat data');
     } finally {
       setLoading(false);
     }
@@ -64,15 +67,15 @@ export default function AttendancePage() {
       });
 
       if (response.ok) {
-        toast.success(`Approved attendance for ${log.full_name}`);
+        toast.success(`Kehadiran ${log.full_name} disetujui`);
         fetchLogs();
       } else {
         const err = await response.json().catch(() => ({}));
-        toast.error(err.error || 'Failed to approve');
+        toast.error(err.error || 'Gagal menyetujui');
       }
     } catch (error) {
       console.error('Approve error:', error);
-      toast.error('Error approving attendance');
+      toast.error('Error menyetujui kehadiran');
     } finally {
       setActionLoading(false);
     }
@@ -96,16 +99,16 @@ export default function AttendancePage() {
       });
 
       if (response.ok) {
-        toast.success(`Rejected attendance for ${selectedLog.full_name}`);
+        toast.success(`Kehadiran ${selectedLog.full_name} ditolak`);
         setRejectDialog(false);
         fetchLogs();
       } else {
         const err = await response.json().catch(() => ({}));
-        toast.error(err.error || 'Failed to reject');
+        toast.error(err.error || 'Gagal menolak');
       }
     } catch (error) {
       console.error('Reject error:', error);
-      toast.error('Error rejecting attendance');
+      toast.error('Error menolak kehadiran');
     } finally {
       setActionLoading(false);
     }
@@ -114,7 +117,7 @@ export default function AttendancePage() {
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center p-8">Loading...</div>
+        <div className="flex items-center justify-center p-8">Memuat...</div>
       </AdminLayout>
     );
   }
@@ -122,28 +125,28 @@ export default function AttendancePage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Attendance Approval</h1>
+        <h1 className="text-3xl font-bold">Persetujuan Kehadiran</h1>
 
         <Card>
           <CardHeader>
-            <CardTitle>Pending Attendance</CardTitle>
+            <CardTitle>Kehadiran Menunggu Persetujuan</CardTitle>
           </CardHeader>
           <CardContent>
             {logs.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                No pending attendance records
+                Tidak ada data kehadiran yang menunggu persetujuan
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Check In</TableHead>
-                      <TableHead>Check Out</TableHead>
+                      <TableHead>Karyawan</TableHead>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Masuk</TableHead>
+                      <TableHead>Pulang</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead>Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -164,7 +167,18 @@ export default function AttendancePage() {
                             : '-'}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{log.status}</Badge>
+                          {log.status === 'LATE' ? (
+                            <div className="flex flex-col gap-1">
+                              <Badge className="bg-orange-500 text-white">TERLAMBAT</Badge>
+                              {log.late_minutes && (
+                                <span className="text-xs text-orange-600">
+                                  {log.late_minutes} menit
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <Badge variant="outline">{log.status}</Badge>
+                          )}
                         </TableCell>
                         <TableCell className="space-x-2">
                           <Button
@@ -175,7 +189,7 @@ export default function AttendancePage() {
                             className="text-green-600 border-green-600 hover:bg-green-50"
                           >
                             <CheckCircle2 className="h-4 w-4 mr-1" />
-                            Approve
+                            Setujui
                           </Button>
                           <Button
                             size="sm"
@@ -185,7 +199,7 @@ export default function AttendancePage() {
                             className="text-red-600 border-red-600 hover:bg-red-50"
                           >
                             <XCircle className="h-4 w-4 mr-1" />
-                            Reject
+                            Tolak
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -202,22 +216,22 @@ export default function AttendancePage() {
       <Dialog open={rejectDialog} onOpenChange={setRejectDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject Attendance</DialogTitle>
+            <DialogTitle>Tolak Kehadiran</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {selectedLog && (
               <div className="text-sm text-muted-foreground">
-                <p>Employee: <strong>{selectedLog.full_name}</strong></p>
-                <p>Date: <strong>{format(new Date(selectedLog.attendance_date), 'MMM dd, yyyy')}</strong></p>
+                <p>Karyawan: <strong>{selectedLog.full_name}</strong></p>
+                <p>Tanggal: <strong>{format(new Date(selectedLog.attendance_date), 'dd MMM yyyy')}</strong></p>
               </div>
             )}
             <div>
-              <Label htmlFor="reject-notes">Rejection Notes (Optional)</Label>
+              <Label htmlFor="reject-notes">Catatan Penolakan (Opsional)</Label>
               <Textarea
                 id="reject-notes"
                 value={rejectNotes}
                 onChange={(e) => setRejectNotes(e.target.value)}
-                placeholder="Reason for rejection..."
+                placeholder="Alasan penolakan..."
                 className="mt-2"
               />
             </div>
@@ -227,14 +241,14 @@ export default function AttendancePage() {
                 onClick={() => setRejectDialog(false)}
                 disabled={actionLoading}
               >
-                Cancel
+                Batal
               </Button>
               <Button
                 onClick={handleReject}
                 disabled={actionLoading}
                 className="bg-red-600 hover:bg-red-700"
               >
-                {actionLoading ? 'Rejecting...' : 'Reject'}
+                {actionLoading ? 'Menolak...' : 'Tolak'}
               </Button>
             </div>
           </div>

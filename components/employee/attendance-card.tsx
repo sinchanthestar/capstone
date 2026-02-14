@@ -71,7 +71,7 @@ export function AttendanceCard() {
   const fetchTodaySchedule = async () => {
     try {
       const today = format(new Date(), 'yyyy-MM-dd');
-      
+
       // Get current user session
       const sessionRes = await fetch('/api/auth/session');
       if (!sessionRes.ok) throw new Error('Failed to get session');
@@ -84,11 +84,11 @@ export function AttendanceCard() {
       // Fetch employee record to get employee_id
       const empRes = await fetch('/api/employees');
       if (!empRes.ok) throw new Error('Failed to fetch employees');
-      
+
       const empJson = await empRes.json();
       const employees = empJson.employees || [];
       const currentEmployee = employees.find((e: any) => e.user_id === session.user.id);
-      
+
       if (!currentEmployee) {
         setTodaySchedule(null);
         return;
@@ -105,7 +105,7 @@ export function AttendanceCard() {
 
       const json = await res.json();
       const assignments = json.assignments || [];
-      
+
       // Get the first assignment (should be only one per day per employee)
       if (assignments.length > 0) {
         const assignment = assignments[0];
@@ -183,16 +183,15 @@ export function AttendanceCard() {
             <CardDescription>Kelola check-in dan check-out Anda (menunggu persetujuan admin)</CardDescription>
           </div>
           <div className="text-right">
-            <Badge 
+            <Badge
               variant={badgeVariant(status)}
-              className={`${
-                status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300' :
-                status === 'PENDING' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
-                status === 'REJECTED' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' :
-                'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-              } px-3 py-1 text-sm font-semibold`}
+              className={`${status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300' :
+                  status === 'PENDING' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
+                    status === 'REJECTED' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' :
+                      'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                } px-3 py-1 text-sm font-semibold`}
             >
-              {status === 'NONE' ? '⏳ Belum absen' : status === 'APPROVED' ? '✅ Approved' : status === 'PENDING' ? '⏳ Pending' : '❌ Rejected'}
+              {status === 'NONE' ? '⏳ Belum absen' : status === 'APPROVED' ? '✅ Disetujui' : status === 'PENDING' ? '⏳ Menunggu' : '❌ Ditolak'}
             </Badge>
           </div>
         </div>
@@ -257,7 +256,7 @@ export function AttendanceCard() {
                 </div>
                 <div className="text-xs text-muted-foreground mt-2">Waktu masuk kerja</div>
               </div>
-              
+
               <div className="rounded-xl border border-border/50 p-4 bg-gradient-to-br from-orange-50/50 to-orange-50/30 dark:from-orange-950/20 dark:to-orange-950/10 hover:shadow-md transition-shadow">
                 <div className="text-sm text-muted-foreground font-medium mb-2">🟠 Check-out</div>
                 <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
@@ -268,17 +267,17 @@ export function AttendanceCard() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Button 
-                onClick={handleCheckIn} 
+              <Button
+                onClick={handleCheckIn}
                 disabled={!canCheckIn}
                 className={canCheckIn ? 'bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white border-0' : ''}
                 size="lg"
               >
                 {actionLoading ? '⏳ Processing...' : '🔵 Absen Masuk'}
               </Button>
-              <Button 
-                onClick={handleCheckOut} 
-                disabled={!canCheckOut} 
+              <Button
+                onClick={handleCheckOut}
+                disabled={!canCheckOut}
                 variant="outline"
                 size="lg"
               >

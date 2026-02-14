@@ -26,10 +26,11 @@ export async function GET(req: NextRequest) {
     );
 
     const leaveRes = await query(
-      `SELECT COUNT(DISTINCT employee_id)::int as count
-       FROM leave_requests
-       WHERE status='APPROVED'
-       AND $1 BETWEEN date_from AND date_to`,
+      `SELECT COUNT(DISTINCT lr.employee_id)::int as count
+       FROM leave_requests lr
+       JOIN schedule_assignments sa ON lr.assignment_id = sa.id
+       WHERE lr.status = 'APPROVED'
+       AND sa.scheduled_date = $1`,
       [date]
     );
 

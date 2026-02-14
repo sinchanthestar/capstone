@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Clock, Users, TrendingUp, AlertCircle } from 'lucide-react';
 import { queryOne } from '@/lib/db';
 import { AttendanceStats } from '@/components/admin/attendance-stats';
+import { ActiveEmployeesList } from '@/components/admin/active-employees-list';
 
 export default async function AdminDashboard() {
   let totalEmployeesDisplay: string | number = '--';
+  let activeEmployeesDisplay: string | number = '--';
   let activeShiftsDisplay: string | number = '--';
   let todaysAssignmentsDisplay: string | number = '--';
   let presentDisplay: string | number = '--';
@@ -27,21 +29,37 @@ export default async function AdminDashboard() {
     activeShiftsDisplay = shifts ? parseInt(shifts.count, 10) : 0;
     todaysAssignmentsDisplay = assignments ? parseInt(assignments.count, 10) : 0;
 
-    // Fetch attendance statistics for today
-    const today = new Date().toISOString().slice(0, 10);
-    
+    // Fetch active employees (currently checked-in today)
+    // Use Indonesian timezone (UTC+8)
+    const now = new Date();
+    const indonesiaTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+    const today = indonesiaTime.toISOString().slice(0, 10);
+
+    const activeEmployees = await queryOne<{ count: string }>(
+      `SELECT COUNT(DISTINCT employee_id)::text as count
+       FROM attendance_logs
+       WHERE attendance_date = $1 
+       AND check_in_time IS NOT NULL 
+       AND check_out_time IS NULL`,
+      [today]
+    );
+
+    activeEmployeesDisplay = activeEmployees ? parseInt(activeEmployees.count, 10) : 0;
+
+    // Fetch attendance statistics for today (using Indonesian timezone)
     const presentRes = await queryOne<{ count: string }>(
       `SELECT COUNT(DISTINCT employee_id)::text as count
        FROM attendance_logs
        WHERE attendance_date = $1 AND status = 'APPROVED'`,
       [today]
     );
-    
+
     const leaveRes = await queryOne<{ count: string }>(
-      `SELECT COUNT(DISTINCT employee_id)::text as count
-       FROM leave_requests
-       WHERE status='APPROVED'
-       AND $1 BETWEEN date_from AND date_to`,
+      `SELECT COUNT(DISTINCT lr.employee_id)::text as count
+       FROM leave_requests lr
+       JOIN schedule_assignments sa ON lr.assignment_id = sa.id
+       WHERE lr.status = 'APPROVED'
+       AND sa.scheduled_date = $1`,
       [today]
     );
 
@@ -75,7 +93,7 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="Total Employees"
             value={totalEmployeesDisplay}
@@ -83,6 +101,15 @@ export default async function AdminDashboard() {
             color="from-blue-500/10 to-blue-500/5"
             iconColor="text-blue-600"
             trend="+2 this month"
+          />
+
+          <StatCard
+            title="Active Employees"
+            value={activeEmployeesDisplay}
+            icon={Users}
+            color="from-green-500/10 to-green-500/5"
+            iconColor="text-green-600"
+            trend="Currently checked-in"
           />
 
           <StatCard
@@ -105,12 +132,15 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Attendance Stats Section */}
-        <AttendanceStats 
+        <AttendanceStats
           presentCount={typeof presentDisplay === 'number' ? presentDisplay : 0}
           alfaCount={typeof alfaDisplay === 'number' ? alfaDisplay : 0}
           leaveCount={typeof leaveDisplay === 'number' ? leaveDisplay : 0}
           date={new Date().toISOString().slice(0, 10)}
         />
+
+        {/* Active Employees List */}
+        <ActiveEmployeesList />
 
         {/* Quick Start Guide */}
         <Card className="border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 hover:shadow-lg transition-shadow">

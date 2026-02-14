@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 import { jwtVerify, SignJWT } from 'jose';
 import { cookies } from 'next/headers';
 
@@ -22,31 +22,37 @@ export interface AuthSession {
   expiresAt: number;
 }
 
+// Cost factor for bcrypt (12 rounds is recommended for security/performance balance)
+const BCRYPT_ROUNDS = 12;
+
 /**
- * Hash password using bcrypt-like approach
- * In production, use the bcrypt library
+ * Hash password using bcrypt
+ * More secure than PBKDF2 with automatic salt handling
  */
 export async function hashPassword(password: string): Promise<string> {
-  // Placeholder - in production, use bcrypt: await bcrypt.hash(password, 10)
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto
-    .pbkdf2Sync(password, salt, 1000, 64, 'sha512')
-    .toString('hex');
-  return `${salt}:${hash}`;
+  return await bcrypt.hash(password, BCRYPT_ROUNDS);
 }
 
 /**
- * Verify password
+ * Verify password against bcrypt hash
  */
 export async function verifyPassword(
   password: string,
   hash: string
 ): Promise<boolean> {
-  const [salt, storedHash] = hash.split(':');
-  const hashBuffer = crypto
-    .pbkdf2Sync(password, salt, 1000, 64, 'sha512')
-    .toString('hex');
-  return hashBuffer === storedHash;
+  // Support legacy PBKDF2 hashes (format: salt:hash)
+  if (hash.includes(':')) {
+    // Legacy PBKDF2 format - for backward compatibility
+    const crypto = await import('crypto');
+    const [salt, storedHash] = hash.split(':');
+    const hashBuffer = crypto
+      .pbkdf2Sync(password, salt, 1000, 64, 'sha512')
+      .toString('hex');
+    return hashBuffer === storedHash;
+  }
+
+  // New bcrypt format
+  return await bcrypt.compare(password, hash);
 }
 
 /**

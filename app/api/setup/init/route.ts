@@ -1,17 +1,22 @@
 import { NextResponse } from 'next/server';
 import { initializeDatabase, checkSetupStatus } from '@/lib/setup';
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    // Check current status
-    const currentStatus = await checkSetupStatus();
+    const { searchParams } = new URL(request.url);
+    const force = searchParams.get('force') === 'true';
 
-    // If already initialized, return success
-    if (currentStatus.isInitialized) {
-      return NextResponse.json(
-        { success: true, message: 'Database already initialized' },
-        { status: 200 }
-      );
+    // Check current status if not forced
+    if (!force) {
+      const currentStatus = await checkSetupStatus();
+
+      // If already initialized, return success
+      if (currentStatus.isInitialized) {
+        return NextResponse.json(
+          { success: true, message: 'Database already initialized' },
+          { status: 200 }
+        );
+      }
     }
 
     // Initialize database

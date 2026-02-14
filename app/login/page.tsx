@@ -32,8 +32,8 @@ export default function LoginPage() {
 
       if (response.ok) {
         const data = await response.json();
-        toast.success('Logged in successfully');
-        
+        toast.success('Berhasil masuk');
+
         // Route based on role
         if (data.user.role === 'admin' || data.user.role === 'manager') {
           router.push('/admin');
@@ -42,10 +42,10 @@ export default function LoginPage() {
         }
       } else {
         const error = await response.json();
-        toast.error(error.error || 'Invalid credentials');
+        toast.error(error.error || 'Email atau password salah');
       }
     } catch (error) {
-      toast.error('Login failed');
+      toast.error('Gagal masuk');
     } finally {
       setLoading(false);
     }
@@ -68,25 +68,25 @@ export default function LoginPage() {
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Shift Manager</h1>
           </div>
-          <p className="text-muted-foreground">Employee shift scheduling system</p>
+          <p className="text-muted-foreground">Sistem Manajemen Jadwal Karyawan</p>
         </div>
 
         {/* Login Card with Glassmorphism */}
         <Card className="border border-white/20 bg-card/80 backdrop-blur-xl shadow-2xl">
           <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>Sign in to your account to continue</CardDescription>
+            <CardTitle className="text-2xl">Selamat Datang</CardTitle>
+            <CardDescription>Masuk ke akun Anda untuk melanjutkan</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
+                <Label htmlFor="email" className="text-sm font-medium">Alamat Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="your@email.com"
+                    placeholder="email@contoh.com"
                     value={formData.email}
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
@@ -97,11 +97,11 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-                  <Link href="#" className="text-xs text-primary hover:underline">Forgot?</Link>
+                  <Label htmlFor="password" className="text-sm font-medium">Kata Sandi</Label>
+                  <Link href="/forgot-password" className="text-xs text-primary hover:underline">Lupa?</Link>
                 </div>
                 <div className="relative">
                   <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
@@ -120,16 +120,16 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white border-0 py-6 text-base font-semibold group" 
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white border-0 py-6 text-base font-semibold group"
                 disabled={loading}
               >
                 {loading ? (
-                  <span>Signing in...</span>
+                  <span>Sedang masuk...</span>
                 ) : (
                   <>
-                    Sign In
+                    Masuk
                     <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
@@ -138,18 +138,18 @@ export default function LoginPage() {
 
             <div className="mt-8 pt-6 border-t border-border/50">
               <p className="text-sm text-center text-muted-foreground mb-4">
-                Don't have an account?
+                Belum punya akun?
               </p>
               <Link href="/register">
                 <Button variant="outline" className="w-full border-border/50 hover:bg-primary/10">
-                  Create Account
+                  Buat Akun
                 </Button>
               </Link>
             </div>
 
             {/* Demo Credentials */}
             <div className="mt-6 p-4 rounded-lg bg-accent/10 border border-accent/20">
-              <p className="text-xs font-semibold text-accent mb-2">Demo Credentials:</p>
+              <p className="text-xs font-semibold text-accent mb-2">Akun Demo:</p>
               <p className="text-xs text-muted-foreground">
                 <span className="font-mono">admin@example.com</span>
               </p>
@@ -162,9 +162,10 @@ export default function LoginPage() {
 
         {/* Footer Link */}
         <div className="text-center text-sm text-muted-foreground">
-          <p>By signing in, you agree to our <a href="#" className="text-primary hover:underline">Terms of Service</a></p>
+          <p>Dengan masuk, Anda menyetujui <a href="#" className="text-primary hover:underline">Ketentuan Layanan</a> kami</p>
         </div>
       </div>
     </div>
   );
 }
+
